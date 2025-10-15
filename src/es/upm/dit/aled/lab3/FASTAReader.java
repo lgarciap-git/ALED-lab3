@@ -5,23 +5,23 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 /**
- * Reads a FASTA file containing genetic information and allows for the search
- * of specific patterns within these data. The information is stored as an array
- * of bytes that contain nucleotides in the FASTA format. Since this array is
- * usually created before knowing how many characters in the origin FASTA file
- * are valid, an int indicating how many bytes of the array are valid is also
- * stored. All valid characters will be at the beginning of the array.
+ * Lee un archivo FASTA que contiene información genética y permite la búsqueda
+ * de patrones específicos dentro de estos datos. La información se almacena como un
+ * array de bytes que contiene nucleótidos en formato FASTA. Dado que este array
+ * normalmente se crea antes de saber cuántos caracteres del archivo FASTA original
+ * son válidos, también se almacena un entero que indica cuántos bytes del array son válidos.
+ * Todos los caracteres válidos estarán al comienzo del array.
  * 
  * @author mmiguel, rgarciacarmona
  *
  */
 public class FASTAReader {
 
-	protected byte[] content;
-	protected int validBytes;
+	protected byte[] content; // Este será nuestro genoma
+	protected int validBytes; // solo serán válidos los elementos desde content[0] hasta content[validBytes- 1]
 
 	/**
 	 * Creates a new FASTAReader from a FASTA file.
@@ -38,32 +38,33 @@ public class FASTAReader {
 	}
 
 	/*
-	 * Helper method to read from a file. It populates the data array with upper
-	 * case version of all the nucleotids found in the file. Throws an IOException
-	 * if there is a problem accessing the file or the file is to big to fit in an
-	 * array.
+	 * Método auxiliar para leer desde un archivo. Llena el array de datos con la
+	 * versión en mayúsculas de todos los nucleótidos encontrados en el archivo.
+	 * Lanza una IOException si hay un problema al acceder al archivo o si el archivo
+	 * es demasiado grande para caber en un array.
 	 */
 	private void readFile(String fileName) throws IOException {
 		File f = new File(fileName);
 		FileInputStream fis = new FileInputStream(f);
 		DataInput fid = new DataInputStream(fis);
-		long len = (int) fis.getChannel().size();
-		if (len > Integer.MAX_VALUE) {
+		//Cast  para guardarlo en un int
+		long len = (int) fis.getChannel().size(); //fis.getChnn().size() devuelve el tamaño del archivo en bytes, y su tipo es long, 
+		if (len > Integer.MAX_VALUE) {		     //porque los archivos pueden ser muy grandes (mucho más que Integer.MAX_VALUE). 
 			fis.close();
 			throw new IOException("The file " + fileName + " is too big. Can't be contained in an array.");
 		}
-		byte[] content = new byte[(int) len];
+		byte[] content = new byte[(int) len]; //Los arrays en Java solo pueden tener tamaño int: cast seguro pq ya sé que len cabe en un int
 		int bytesRead = 0;
-		int numRead = 0;
-		String line;
+		int numRead = 0; //Número de bytes que tiene la línea actual (line.length() abajo)
+		String line; //Cada linea del fichero
 		while ((line = fid.readLine()) != null) {
 			// Put every character in upper case
 			line = line.toUpperCase();
 			numRead = line.length();
-			byte[] newData = line.getBytes();
-			for (int i = 0; i < numRead; i++)
-				content[bytesRead + i] = newData[i];
-			bytesRead += numRead;
+			byte[] newData = line.getBytes(); //Es un array temporal que contiene los bytes de una línea del archivo (line.getBytes()
+			for (int i = 0; i < numRead; i++) //Bucle que recorre las lineas del fichero
+				content[bytesRead + i] = newData[i]; //bytesRead + i (sabiendo que bR se actualiza en cada for) es para seguir llenando "content" 
+				bytesRead += numRead; //A los bytes leidos se les añade los de la linea que ha recorrido el for
 		}
 		fis.close();
 		this.content = content;
@@ -81,42 +82,42 @@ public class FASTAReader {
 	}
 
 	/**
-	 * Provides the amount of bytes in the data array that are valid. Since this
-	 * array is created before the amount of bytes in the FASTA file that contain
-	 * actual nucleotids are know, a worst-case scenario is assumed. So, only
-	 * positions between content[0] and content[validBytes -1] have actual genomic
-	 * data.
+	 * Proporciona la cantidad de bytes válidos en el array de datos. Dado que este
+	 * array se crea antes de conocer la cantidad de bytes en el archivo FASTA que
+	 * contienen nucleótidos reales, se asume un escenario de peor caso. Por lo tanto,
+	 * solo las posiciones entre content[0] y content[validBytes - 1] contienen datos
+	 * genómicos reales.
 	 * 
-	 * @return The number of valid bytes.
+	 * @return El número de bytes válidos.
 	 */
 	public int getValidBytes() {
 		return validBytes;
 	}
 
 	/**
-	 * Returns the sequence of nucleotides of the provided size found at the
-	 * provided position of the data array. If the initialPos + size is after the
-	 * valid bytes of the array, it returns null.
+	 * Devuelve la secuencia de nucleótidos del tamaño indicado encontrada en la
+	 * posición proporcionada del array de datos. Si initialPos + size supera la
+	 * cantidad de bytes válidos del array, devuelve null.
 	 * 
-	 * @param initialPos The first character of the sequence.
-	 * @param size       The length of the sequence.
-	 * @return An String representing the sequence.
+	 * @param initialPos El primer carácter de la secuencia.
+	 * @param size       La longitud de la secuencia.
+	 * @return Una cadena (String) que representa la secuencia.
 	 */
-	public String getSequence(int initialPos, int size) {
+	public String getSequence(int initialPos, int size) { // desde la posicion que se marque coge un intervalo del tamaó size
 		if (initialPos + size >= validBytes)
 			return null;
 		return new String(content, initialPos, size);
 	}
 
 	/*
-	 * Helper method that checks if a pattern appears at a specific position in the
-	 * data array. It checks every byte of the pattern one by one. If the pattern
-	 * length would need to access a position after the valid bytes of the array, it
-	 * throws a new FASTAException to indicate this fact.
+	 * Método auxiliar que verifica si un patrón aparece en una posición específica
+	 * del array de datos. Comprueba cada byte del patrón uno por uno. Si la longitud
+	 * del patrón requiere acceder a una posición después de los bytes válidos del
+	 * array, lanza una nueva FASTAException para indicar este hecho.
 	 * 
-	 * Returns true if the pattern is present at the given position; false
-	 * otherwise.
+	 * Devuelve true si el patrón está presente en la posición indicada; false en caso contrario.
 	 */
+
 	private boolean compare(byte[] pattern, int position) throws FASTAException {
 		if (position + pattern.length > validBytes) {
 			throw new FASTAException("Pattern goes beyond the end of the file.");
@@ -131,21 +132,22 @@ public class FASTAReader {
 	}
 
 	/*
-	 * Improved version of the compare method that stops checking elements of the
-	 * pattern when one has been found to be different.
+	 * Versión mejorada del método compare que deja de comprobar los elementos del
+	 * patrón cuando se encuentra uno que es diferente.
 	 */
+
 	private boolean compareImproved(byte[] pattern, int position) throws FASTAException {
 		// TODO
 		return false;
 	}
 
 	/*
-	 * Improved version of the compare method that returns the number of bytes in
-	 * the pattern that are different from the ones present in the data array at the
-	 * given position.
+	 * Versión mejorada del método compare que devuelve el número de bytes en el
+	 * patrón que son diferentes de los presentes en el array de datos en la posición
+	 * indicada.
 	 * 
-	 * Returns the number of characters in the pattern that are different from the
-	 * ones present in the indicated position.
+	 * Devuelve el número de caracteres en el patrón que son distintos de los que
+	 * están en la posició*
 	 */
 	private int compareNumErrors(byte[] pattern, int position) throws FASTAException {
 		// TODO
@@ -153,31 +155,55 @@ public class FASTAReader {
 	}
 
 	/**
-	 * Implements a linear search to look for the provided pattern in the data
-	 * array. Returns a List of Integers that point to the initial positions of all
-	 * the occurrences of the pattern in the data.
+	 * Implementa una búsqueda lineal para encontrar el patrón proporcionado en el
+	 * array de datos. Devuelve una lista de enteros que indican las posiciones
+	 * iniciales de todas las apariciones del patrón en los datos.
 	 * 
-	 * @param pattern The pattern to be found.
-	 * @return All the positions of the first character of every occurrence of the
-	 *         pattern in the data.
+	 * @param pattern El patrón que se desea encontrar.
+	 * @return Todas las posiciones del primer carácter de cada aparición del
+	 *         patrón en los datos.
 	 */
-	public List<Integer> search(byte[] pattern) {
-		// TODO
-		return null;
-	}
 
+	public List<Integer> search(byte[] pattern) {
+		List<Integer> listaPos = new ArrayList<Integer>();
+		
+		for(int i = 0; i <= (validBytes - pattern.length) ; i++) {
+			
+			boolean coincide = true;
+			
+			if(content[i] == pattern[0]) { 
+				
+				for(int j = 0 ; j < pattern.length ; j++) {
+					if(content[i + j] != pattern[j]) { //empiezo desde i porque se que en esa posicion ha coincidido y a partri de ahi comparo cada posicion "j" y la j en content para ver si coinciden
+						coincide = false;
+						break;
+					}
+						
+				
+				}
+			}
+				
+			if(coincide) {
+				listaPos.add(i);
+			}	
+		}
+		
+		return listaPos;
+	}
+	
 	/**
-	 * Implements a linear search to look for the provided pattern in the data array
-	 * but allowing a SNV (Single Nucleotide Variant). In SNV, one nucleotide is
-	 * allowed to be different from the pattern. Therefore, this method returns a
-	 * List of Integers that point to the initial positions of all the occurrences
-	 * of the pattern in the data and all the occurrences of the pattern with one
-	 * error in the data
+	 * Implementa una búsqueda lineal para encontrar el patrón proporcionado en el
+	 * array de datos, pero permitiendo una SNV (Variación de Nucleótido Único).
+	 * En una SNV, se permite que un nucleótido sea diferente al del patrón.
+	 * Por lo tanto, este método devuelve una lista de enteros que indican las
+	 * posiciones iniciales de todas las apariciones del patrón en los datos y
+	 * de todas las apariciones del patrón con un error en los datos.
 	 * 
-	 * @param pattern The pattern to be found.
-	 * @return All the positions of the first character of every occurrence of the
-	 *         pattern (with up to 1 errors) in the data.
+	 * @param pattern El patrón que se desea encontrar.
+	 * @return Todas las posiciones del primer carácter de cada aparición del
+	 *         patrón (con hasta 1 error) en los datos.
 	 */
+
 	public List<Integer> searchSNV(byte[] pattern) {
 		// TODO
 		return null;
