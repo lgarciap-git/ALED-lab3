@@ -153,7 +153,7 @@ public class FASTAReader {
 		// TODO
 		return -1;
 	}
-
+//h
 	/**
 	 * Implementa una búsqueda lineal para encontrar el patrón proporcionado en el
 	 * array de datos. Devuelve una lista de enteros que indican las posiciones
