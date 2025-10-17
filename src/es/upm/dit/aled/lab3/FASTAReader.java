@@ -124,7 +124,7 @@ public class FASTAReader {
 		}
 		boolean match = true;
 		for (int i = 0; i < pattern.length; i++) {
-			if (pattern[i] != content[position + i]) {
+			if (pattern[i] != content[position + i]) { //Se recorre todo pattern aunque la primera comparacion no coincida --> ahí se marca ya match = false
 				match = false;
 			}
 		}
@@ -137,8 +137,18 @@ public class FASTAReader {
 	 */
 
 	private boolean compareImproved(byte[] pattern, int position) throws FASTAException {
-		// TODO
-		return false;
+		if (position + pattern.length > validBytes) {
+			throw new FASTAException("Pattern goes beyond the end of the file.");
+		}
+		boolean coinciden = true;
+		for (int i = 0; i < pattern.length; i++) {
+			if (pattern[i] != content[position + i]) { 
+				coinciden = false;
+				break;
+			}
+		}
+		return coinciden;
+	
 	}
 
 	/*
@@ -150,10 +160,19 @@ public class FASTAReader {
 	 * están en la posició*
 	 */
 	private int compareNumErrors(byte[] pattern, int position) throws FASTAException {
-		// TODO
-		return -1;
+		if (position + pattern.length > validBytes) {
+			throw new FASTAException("Pattern goes beyond the end of the file.");
+		}
+		int error = 0;
+		for (int i = 0; i < pattern.length; i++) {
+			if (pattern[i] != content[position + i]) { 
+				error++;
+			}
+		}
+		return error;
+	
 	}
-//h
+
 	/**
 	 * Implementa una búsqueda lineal para encontrar el patrón proporcionado en el
 	 * array de datos. Devuelve una lista de enteros que indican las posiciones
@@ -162,32 +181,20 @@ public class FASTAReader {
 	 * @param pattern El patrón que se desea encontrar.
 	 * @return Todas las posiciones del primer carácter de cada aparición del
 	 *         patrón en los datos.
+	 * @throws FASTAException 
 	 */
 
-	public List<Integer> search(byte[] pattern) {
+	public List<Integer> search(byte[] pattern) throws FASTAException {
 		List<Integer> listaPos = new ArrayList<Integer>();
 		
-		for(int i = 0; i <= (validBytes - pattern.length) ; i++) {
+		//For hasta validB - longitud de pattern porque si los bytes validos son 8 por ejemplo, si empiezo a comparar por el 
+		//séptimo byte, solo puedo comparar 2 ... no válido
+		for(int i = 0; i < (getValidBytes() - pattern.length) ; i++) {
 			
-			boolean coincide = true;
-			
-			if(content[i] == pattern[0]) { 
-				
-				for(int j = 0 ; j < pattern.length ; j++) {
-					if(content[i + j] != pattern[j]) { //empiezo desde i porque se que en esa posicion ha coincidido y a partri de ahi comparo cada posicion "j" y la j en content para ver si coinciden
-						coincide = false;
-						break;
-					}
-						
-				
-				}
-			}
-				
-			if(coincide) {
+			if(compareImproved(pattern, i)) {
 				listaPos.add(i);
-			}	
+			}
 		}
-		
 		return listaPos;
 	}
 	
@@ -202,14 +209,22 @@ public class FASTAReader {
 	 * @param pattern El patrón que se desea encontrar.
 	 * @return Todas las posiciones del primer carácter de cada aparición del
 	 *         patrón (con hasta 1 error) en los datos.
+	 * @throws FASTAException 
 	 */
 
-	public List<Integer> searchSNV(byte[] pattern) {
-		// TODO
-		return null;
+	public List<Integer> searchSNV(byte[] pattern) throws FASTAException {
+		List<Integer> listaPoscs = new ArrayList<Integer>();
+		
+		for(int i = 0; i < (getValidBytes() - pattern.length) ; i++) {
+			
+			if(compareNumErrors(pattern, i) <= 1) {
+				listaPoscs.add(i);
+			}
+		}
+		return listaPoscs;
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FASTAException {
 		long t1 = System.nanoTime();
 		FASTAReader reader = new FASTAReader(args[0]);
 		if (args.length == 1)
