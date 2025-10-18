@@ -8,7 +8,7 @@ package es.upm.dit.aled.lab3.binary;
  * @author mmiguel, rgarciacarmona
  */
 public class Suffix {
-	public final int suffixIndex;
+	public final int suffixIndex; 		// Posición en content en la que está el sufijo
 
 	/**
 	 * Creates a new Suffix.

@@ -123,7 +123,7 @@ public class FASTAReader {
 			throw new FASTAException("Pattern goes beyond the end of the file.");
 		}
 		boolean match = true;
-		for (int i = 0; i < pattern.length; i++) {
+		for (int i = 0; i < pattern.length; i++) { //COmplejida O de M con M < N porque este for da vueltas al patrón < genoma
 			if (pattern[i] != content[position + i]) { //Se recorre todo pattern aunque la primera comparacion no coincida --> ahí se marca ya match = false
 				match = false;
 			}
@@ -184,15 +184,20 @@ public class FASTAReader {
 	 * @throws FASTAException 
 	 */
 
-	public List<Integer> search(byte[] pattern) throws FASTAException {
+	public List<Integer> search(byte[] pattern) { //complejida
 		List<Integer> listaPos = new ArrayList<Integer>();
 		
 		//For hasta validB - longitud de pattern porque si los bytes validos son 8 por ejemplo, si empiezo a comparar por el 
 		//séptimo byte, solo puedo comparar 2 ... no válido
-		for(int i = 0; i < (getValidBytes() - pattern.length) ; i++) {
+		for(int i = 0; i < (getValidBytes() - pattern.length) ; i++) { //for en genoma
 			
-			if(compareImproved(pattern, i)) {
-				listaPos.add(i);
+			try {
+				if(compareImproved(pattern, i)) {
+					listaPos.add(i);
+				}
+			} catch (FASTAException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 		return listaPos;
@@ -224,14 +229,21 @@ public class FASTAReader {
 		return listaPoscs;
 	}
 
-	public static void main(String[] args) throws FASTAException {
+	
+	public static void main(String[] args)  {
 		long t1 = System.nanoTime();
 		FASTAReader reader = new FASTAReader(args[0]);
 		if (args.length == 1)
 			return;
 		System.out.println("Tiempo de apertura de fichero: " + (System.nanoTime() - t1));
 		long t2 = System.nanoTime();
-		List<Integer> posiciones = reader.search(args[1].getBytes());
+		List<Integer> posiciones = null;
+		try {
+			posiciones = reader.searchSNV(args[1].getBytes());
+		} catch (FASTAException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println("Tiempo de búsqueda: " + (System.nanoTime() - t2));
 		if (posiciones.size() > 0) {
 			for (Integer pos : posiciones)
