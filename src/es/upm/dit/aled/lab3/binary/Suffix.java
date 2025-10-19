@@ -8,10 +8,10 @@ package es.upm.dit.aled.lab3.binary;
  * @author mmiguel, rgarciacarmona
  */
 public class Suffix {
-	public final int suffixIndex; 		// Posición en content en la que está el sufijo
+	public final int suffixIndex; 		// Eentero que indica en qué posición de content se encuentra dicho sufijo
 
 	/**
-	 * Creates a new Suffix.
+	 * Crea un nuevo sufijo.
 	 * 
 	 * @param index The starting position of the suffix in the data array.
 	 */
@@ -19,3 +19,8 @@ public class Suffix {
 		suffixIndex = index;
 	}
 }
+
+//sufijo 0 --> patrón entero
+//sufijo 1 --> se le quita la primera base al patrón
+
+//cada sufijo solo guarda el entero donde empeiza el patrón en el array de content --> posición en content!!

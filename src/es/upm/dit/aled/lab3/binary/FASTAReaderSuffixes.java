@@ -90,14 +90,14 @@ public class FASTAReaderSuffixes extends FASTAReader {
 		int hi = suffixes.length -1 ; //empieza siendo la ultima posicion  (incluida)
 		int lo = 0;					//empieza siendo 0
 		
-		int mid = 0;
+		int me = 0;
 		int posSuf = 0;
 		int index = 0; //lo que miro en patter (posicion)
 		boolean encontrado = false;
 		
 		do {
-			mid = (int) Math.floor(lo + (hi-lo)/2); //se actualiza cada vez 
-			posSuf = suffixes[mid].suffixIndex;
+			me = (int) Math.floor(lo + (hi-lo)/2); //se actualiza cada vez 
+			posSuf = suffixes[me].suffixIndex;
 			
 			//Recorro pattern con el indice que sera la posicion dentro de pattern, compararé con suffixes desde el medio 
 			for(index = 0; index < pattern.length; index++) {
@@ -108,14 +108,14 @@ public class FASTAReaderSuffixes extends FASTAReader {
 			//Si se da qeu index llega a ser la ultima posc del patrón es porque el bucle se ha recorrido del todo y
 			//por lo tanto todos los caracteres coinciden --> encontrado = true
 			if(index == pattern.length) {
-				encontrado = true;
+				encontrado = true; //para el while
 				listaP.add(posSuf);
 			}
 			else {
 				if(pattern[index] < content[posSuf + index]) 
-					hi = mid -1;
+					hi = me -1;
 				else 
-					lo = mid + 1;
+					lo = me + 1;
 			}						
 			
 		} while (!encontrado && hi - lo > 1);
