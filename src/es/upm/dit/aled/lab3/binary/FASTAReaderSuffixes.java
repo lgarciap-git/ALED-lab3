@@ -1,6 +1,8 @@
 package es.upm.dit.aled.lab3.binary;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import es.upm.dit.aled.lab3.FASTAReader;
@@ -20,7 +22,8 @@ import es.upm.dit.aled.lab3.FASTAReader;
  *
  */
 public class FASTAReaderSuffixes extends FASTAReader {
-	protected Suffix[] suffixes;
+	protected Suffix[] suffixes;  //Contiene suffixes, un array de Suffix que lista las posiciones de los posibles sufijos del
+	 							  //genoma sobre el que se busca.
 
 	/**
 	 * Creates a new FASTAReader from a FASTA file.
@@ -31,13 +34,14 @@ public class FASTAReaderSuffixes extends FASTAReader {
 	 * @param fileName The name of the FASTA file.
 	 */
 	public FASTAReaderSuffixes(String fileName) {
-		// Calls the parent constructor
+		// LLama al constructor de la clase madre (FASTAReader) --> se hace con fileName lo que se hace en esa clase
+		// que es:  -> Creates a new FASTAReader from a FASTA file
 		super(fileName);
-		this.suffixes = new Suffix[validBytes];
-		for (int i = 0; i < validBytes; i++)
-			suffixes[i] = new Suffix(i);
+		this.suffixes = new Suffix[validBytes]; //array del tamaño de los bytes validos
+		for (int i = 0; i < validBytes; i++) //se llena el array, ordenado "segun tamaño"
+			suffixes[i] = new Suffix(i); 	//en la posicion 0 --> sufijo ; en la 1 --> sufijo sin la primera base etc
 		// Sorts the data
-		sort();
+		sort(); //aqui lo ordena alfabeticamente
 	}
 
 	/*
@@ -68,20 +72,59 @@ public class FASTAReaderSuffixes extends FASTAReader {
 	}
 
 	/**
-	 * Implements a binary search to look for the provided pattern in the data
-	 * array. Returns a List of Integers that point to the initial positions of all
-	 * the occurrences of the pattern in the data.
+	 * Implementa una búsqueda binaria para buscar el patrón proporcionado en el array de datos.
+	 * Devuelve una lista de enteros que indican las posiciones iniciales de todas las
+	 * ocurrencias del patrón en los datos.
 	 * 
-	 * @param pattern The pattern to be found.
-	 * @return All the positions of the first character of every occurrence of the
-	 *         pattern in the data.
+	 * @param pattern El patrón que se desea encontrar.
+	 * @return Todas las posiciones del primer carácter de cada ocurrencia del
+	 *         patrón en los datos.
 	 */
+	
+	//Para saber los indices dentro de ocntent en los que está el patrón voy a buscarlo en sufixxes --> un array
+	//ordenado alfabeticamente que me proporciona el indice en el que está su ".." dentro de content 
+	//Es más facil buscar en suffixes --> complejidad nivel logaritmo ; ya está ordenado
 	@Override
 	public List<Integer> search(byte[] pattern) {
-		// TODO
-		return null;
+		List<Integer> listaP = new ArrayList<Integer>();
+		int hi = suffixes.length -1 ; //empieza siendo la ultima posicion  (incluida)
+		int lo = 0;					//empieza siendo 0
+		
+		int mid = 0;
+		int posSuf = 0;
+		int index = 0; //lo que miro en patter (posicion)
+		boolean encontrado = false;
+		
+		do {
+			mid = (int) Math.floor(lo + (hi-lo)/2); //se actualiza cada vez 
+			posSuf = suffixes[mid].suffixIndex;
+			
+			//Recorro pattern con el indice que sera la posicion dentro de pattern, compararé con suffixes desde el medio 
+			for(index = 0; index < pattern.length; index++) {
+				//Que se rompa el for si hay diferencia
+				if(pattern[index] != content[posSuf + index]) 	//sale del for cuando index = pattern.length 
+					break;
+			}
+			//Si se da qeu index llega a ser la ultima posc del patrón es porque el bucle se ha recorrido del todo y
+			//por lo tanto todos los caracteres coinciden --> encontrado = true
+			if(index == pattern.length) {
+				encontrado = true;
+				listaP.add(posSuf);
+			}
+			else {
+				if(pattern[index] < content[posSuf + index]) 
+					hi = mid -1;
+				else 
+					lo = mid + 1;
+			}						
+			
+		} while (!encontrado && hi - lo > 1);
+		
+		return listaP;
 	}
 
+	
+	
 	public static void main(String[] args) {
 		long t1 = System.nanoTime();
 		FASTAReaderSuffixes reader = new FASTAReaderSuffixes(args[0]);
